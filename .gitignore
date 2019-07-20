@@ -1,0 +1,4 @@
+.terraform/*
+vpc-main/*.terraform/
+vpc-main/terraform.tfstate
+vpc-main/terraform.tfstate.backup
