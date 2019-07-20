@@ -88,7 +88,7 @@ resource "null_resource" "etcd0" {
   }
 
   provisioner "local-exec" {
-    command = "ETCD_NAME=${aws_instance.controller0.private_dns} && INTERNAL_IP=${aws_instance.controller0.private_ip} && INITIAL_CLUSTER=${aws_instance.controller0.private_dns}=https://${aws_instance.controller0.private_ip}:2380,${aws_instance.controller1.private_dns}=https://${aws_instance.controller1.private_ip}:2380 && cd configs && envsubst '${ETCD_NAME} ${INTERNAL_IP}' < etcd-service > etcd.service-0"
+    command = "ETCD_NAME=${aws_instance.controller0.private_dns} && INTERNAL_IP=${aws_instance.controller0.private_ip} && INITIAL_CLUSTER=${aws_instance.controller0.private_dns}=https://${aws_instance.controller0.private_ip}:2380,${aws_instance.controller1.private_dns}=https://${aws_instance.controller1.private_ip}:2380 && cd configs && envsubst '$${ETCD_NAME} $${INTERNAL_IP}' < etcd-service > etcd.service-0"
   }
 
   provisioner "file" {
@@ -116,7 +116,7 @@ resource "null_resource" "etcd1" {
   }
 
   provisioner "local-exec" {
-    command = "ETCD_NAME=${aws_instance.controller1.private_dns} && INTERNAL_IP=${aws_instance.controller1.private_ip} && INITIAL_CLUSTER=${aws_instance.controller0.private_dns}=https://${aws_instance.controller0.private_ip}:2380,${aws_instance.controller1.private_dns}=https://${aws_instance.controller1.private_ip}:2380 && cd configs && envsubst '${ETCD_NAME} ${INTERNAL_IP}' < etcd-service > etcd.service-1"
+    command = "ETCD_NAME=${aws_instance.controller1.private_dns} && INTERNAL_IP=${aws_instance.controller1.private_ip} && INITIAL_CLUSTER=${aws_instance.controller0.private_dns}=https://${aws_instance.controller0.private_ip}:2380,${aws_instance.controller1.private_dns}=https://${aws_instance.controller1.private_ip}:2380 && cd configs && envsubst '$${ETCD_NAME} $${INTERNAL_IP}' < etcd-service > etcd.service-1"
   }
 
   provisioner "file" {
@@ -163,7 +163,7 @@ resource "aws_instance" "controller0" {
   }
 
   provisioner "local-exec" {
-    command = "ENCRYPTION_KEY=$(head -c 32 /dev/urandom | base64) && cd configs && envsubst ${ENCRYPTION_KEY} < encryption-config.yaml > encryption-config-0.yaml"
+    command = "ENCRYPTION_KEY=$(head -c 32 /dev/urandom | base64) && cd configs && envsubst $${ENCRYPTION_KEY} < encryption-config.yaml > encryption-config-0.yaml"
   }
 
   provisioner "file" {
@@ -219,7 +219,7 @@ resource "aws_instance" "controller1" {
   }
 
   provisioner "local-exec" {
-    command = "ENCRYPTION_KEY=$(head -c 32 /dev/urandom | base64) && cd configs && envsubst ${ENCRYPTION_KEY} < encryption-config.yaml > encryption-config-1.yaml"
+    command = "ENCRYPTION_KEY=$(head -c 32 /dev/urandom | base64) && cd configs && envsubst $${ENCRYPTION_KEY} < encryption-config.yaml > encryption-config-1.yaml"
   }
 
   provisioner "file" {
