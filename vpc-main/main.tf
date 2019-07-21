@@ -141,6 +141,7 @@ resource "null_resource" "setup_controller0" {
     source      = "configs/kube-scheduler.service"
     destination = "/home/ubuntu/kube-scheduler.service"
   }
+
   provisioner "file" {
     source      = "configs/kubernetes.default.svc.cluster.local"
     destination = "/home/ubuntu/kubernetes.default.svc.cluster.local"
@@ -151,11 +152,10 @@ resource "null_resource" "setup_controller0" {
     destination = "/home/ubuntu/rbac.yaml"
   }
 
-    provisioner "file" {
+  provisioner "file" {
     source      = "configs/user-rbac.yaml"
     destination = "/home/ubuntu/user-rbac.yaml"
   }
-
 
   provisioner "remote-exec" {
     inline = [
@@ -285,7 +285,7 @@ resource "null_resource" "setup_controller1" {
     destination = "/home/ubuntu/kube-scheduler.service"
   }
 
-    provisioner "file" {
+  provisioner "file" {
     source      = "configs/kubernetes.default.svc.cluster.local"
     destination = "/home/ubuntu/kubernetes.default.svc.cluster.local"
   }
@@ -316,7 +316,7 @@ resource "null_resource" "setup_controller1" {
       "sudo systemctl start kube-apiserver kube-controller-manager kube-scheduler",
       "sudo systemctl status kube-apiserver kube-controller-manager kube-scheduler",
       "kubectl get componentstatuses --kubeconfig admin.kubeconfig",
-          "sudo apt-get install -y nginx",
+      "sudo apt-get install -y nginx",
       "sudo mv kubernetes.default.svc.cluster.local /etc/nginx/sites-available/kubernetes.default.svc.cluster.local",
       "sudo ln -s /etc/nginx/sites-available/kubernetes.default.svc.cluster.local /etc/nginx/sites-enabled/",
       "sudo systemctl restart nginx",
@@ -453,34 +453,33 @@ resource "null_resource" "setup_worker0" {
     destination = "/home/ubuntu/config.toml"
   }
 
-   provisioner "local-exec" {
+  provisioner "local-exec" {
     command = "HOSTNAME=${aws_instance.worker0.private_dns} && cd configs && envsubst $${HOSTNAME} < kubelet-config.yaml > kubelet-config0.yaml"
   }
 
-   provisioner "file" {
+  provisioner "file" {
     source      = "configs/kubelet-config0.yaml"
     destination = "/home/ubuntu/kubelet-config.yaml"
   }
 
-   provisioner "local-exec" {
+  provisioner "local-exec" {
     command = "HOSTNAME=${aws_instance.worker0.private_dns} && cd configs && envsubst $${HOSTNAME} < kubelet.service > kubelet.service0"
   }
 
-   provisioner "file" {
+  provisioner "file" {
     source      = "configs/kubelet.service0"
     destination = "/home/ubuntu/kubelet.service"
   }
 
-   provisioner "file" {
+  provisioner "file" {
     source      = "configs/kube-proxy-config.yaml"
     destination = "/home/ubuntu/kube-proxy-config.yaml"
   }
 
-   provisioner "file" {
+  provisioner "file" {
     source      = "configs/kube-proxy.service"
     destination = "/home/ubuntu/kube-proxy.service"
   }
-
 
   provisioner "remote-exec" {
     inline = [
@@ -502,7 +501,7 @@ resource "null_resource" "setup_worker0" {
       "sudo tar -xvf containerd-1.1.0.linux-amd64.tar.gz -C /",
       "sudo mkdir -p /etc/containerd/",
       "sudo cp config.toml /etc/containerd/config.toml",
-      "sudo cp containerd.service /etc/systemd/system/containerd.service"
+      "sudo cp containerd.service /etc/systemd/system/containerd.service",
       "sudo mv ${aws_instance.worker0.private_dns}-key.pem /var/lib/kubelet/${aws_instance.worker0.private_dns}.pem",
       "sudo mv ${aws_instance.worker0.private_dns}.kubeconfig /var/lib/kubelet/kubeconfig",
       "sudo mv ca.pem /var/lib/kubernetes/",
@@ -514,7 +513,7 @@ resource "null_resource" "setup_worker0" {
       "sudo systemctl daemon-reload",
       "sudo systemctl enable containerd kubelet kube-proxy",
       "sudo systemctl start containerd kubelet kube-proxy",
-      "sudo systemctl status containerd kubelet kube-proxy"
+      "sudo systemctl status containerd kubelet kube-proxy",
     ]
   }
 
@@ -560,35 +559,35 @@ resource "null_resource" "setup_worker1" {
     destination = "/home/ubuntu/config.toml"
   }
 
-   provisioner "local-exec" {
+  provisioner "local-exec" {
     command = "HOSTNAME=${aws_instance.worker1.private_dns} && cd configs && envsubst $${HOSTNAME} < kubelet-config.yaml > kubelet-config1.yaml"
   }
 
-   provisioner "file" {
+  provisioner "file" {
     source      = "configs/kubelet-config1.yaml"
     destination = "/home/ubuntu/kubelet-config.yaml"
   }
 
-   provisioner "local-exec" {
+  provisioner "local-exec" {
     command = "HOSTNAME=${aws_instance.worker1.private_dns} && cd configs && envsubst $${HOSTNAME} < kubelet.service > kubelet.service1"
   }
 
-   provisioner "file" {
+  provisioner "file" {
     source      = "configs/kubelet.service1"
     destination = "/home/ubuntu/kubelet.service"
   }
 
-   provisioner "file" {
+  provisioner "file" {
     source      = "configs/kube-proxy-config.yaml"
     destination = "/home/ubuntu/kube-proxy-config.yaml"
   }
 
-   provisioner "file" {
+  provisioner "file" {
     source      = "configs/kube-proxy.service"
     destination = "/home/ubuntu/kube-proxy.service"
   }
 
-   provisioner "remote-exec" {
+  provisioner "remote-exec" {
     inline = [
       "sudo apt-get -y install socat conntrack ipset",
       "wget https://github.com/kubernetes-incubator/cri-tools/releases/download/v1.0.0-beta.0/crictl-v1.0.0-beta.0-linux-amd64.tar.gz",
@@ -608,7 +607,7 @@ resource "null_resource" "setup_worker1" {
       "sudo tar -xvf containerd-1.1.0.linux-amd64.tar.gz -C /",
       "sudo mkdir -p /etc/containerd/",
       "sudo cp config.toml /etc/containerd/config.toml",
-      "sudo cp containerd.service /etc/systemd/system/containerd.service"
+      "sudo cp containerd.service /etc/systemd/system/containerd.service",
       "sudo mv ${aws_instance.worker1.private_dns}-key.pem /var/lib/kubelet/${aws_instance.worker1.private_dns}.pem",
       "sudo mv ${aws_instance.worker1.private_dns}.kubeconfig /var/lib/kubelet/kubeconfig",
       "sudo mv ca.pem /var/lib/kubernetes/",
@@ -620,8 +619,7 @@ resource "null_resource" "setup_worker1" {
       "sudo systemctl daemon-reload",
       "sudo systemctl enable containerd kubelet kube-proxy",
       "sudo systemctl start containerd kubelet kube-proxy",
-      "sudo systemctl status containerd kubelet kube-proxy"
-
+      "sudo systemctl status containerd kubelet kube-proxy",
     ]
   }
 
