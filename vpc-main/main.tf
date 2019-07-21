@@ -20,7 +20,7 @@ module "vpc" {
 
   private_subnets         = "${var.vpc_private_subnet_list}"
   public_subnets          = "${var.vpc_public_subnet_list}"
-  enable_nat_gateway      = true
+  enable_nat_gateway      = false
   single_nat_gateway      = true
   map_public_ip_on_launch = true
 
@@ -43,7 +43,6 @@ module "vpc" {
   create_database_subnet_route_table = false
 }
 
-
 resource "aws_instance" "master" {
   # Amazon optimized EKS AMI
   ami           = "ami-08e2b16807644cf1d"
@@ -60,11 +59,11 @@ resource "aws_instance" "master" {
 
   root_block_device {
     volume_type           = "gp2"
-    volume_size           = "35"
+    volume_size           = "60"
     delete_on_termination = true
   }
 
-    connection {
+  connection {
     host        = "${self.public_ip}"
     type        = "ssh"
     timeout     = "6m"
@@ -72,22 +71,18 @@ resource "aws_instance" "master" {
     private_key = "${file("~/.ssh/id_rsa")}"
   }
 
-
-   provisioner "file" {
+  provisioner "file" {
     source      = "configs/kubernetes.repo"
     destination = "/home/centos/kubernetes.repo"
   }
 
-   provisioner "file" {
+  provisioner "file" {
     source      = "configs/k8s.conf"
     destination = "/home/centos/k8s.conf"
   }
 
   provisioner "remote-exec" {
     inline = ["sudo swapoff -a",
-      "sudo yum -y install docker",
-      "sudo systemctl enable docker",
-"sudo systemctl start docker",
       "sudo cp kubernetes.repo /etc/yum.repos.d/kubernetes.repo",
       "sudo yum install -y kubelet kubeadm kubectl",
       "sudo systemctl enable kubelet",
@@ -98,8 +93,7 @@ resource "aws_instance" "master" {
       "mkdir -p $HOME/.kube",
       "sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config",
       "sudo chown $(id -u):$(id -g) $HOME/.kube/config",
-      "kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/bc79dd1505b0c8681ece4de4c0d86c5cd2643275/Documentation/kube-flannel.yml"
-
+      "kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/bc79dd1505b0c8681ece4de4c0d86c5cd2643275/Documentation/kube-flannel.yml",
     ]
   }
 
@@ -122,7 +116,7 @@ resource "aws_instance" "worker0" {
 
   root_block_device {
     volume_type           = "gp2"
-    volume_size           = "35"
+    volume_size           = "60"
     delete_on_termination = true
   }
 
@@ -134,20 +128,18 @@ resource "aws_instance" "worker0" {
     private_key = "${file("~/.ssh/id_rsa")}"
   }
 
-  provisioner "local-exec" {
-    command = "ENCRYPTION_KEY=$(head -c 32 /dev/urandom | base64) && cd configs && envsubst $${ENCRYPTION_KEY} < encryption-config.yaml > encryption-config-1.yaml"
+  provisioner "file" {
+    source      = "configs/kubernetes.repo"
+    destination = "/home/centos/kubernetes.repo"
   }
 
   provisioner "file" {
-    source      = "configs/encryption-config-1.yaml"
-    destination = "/home/ubuntu/encryption-config.yaml"
+    source      = "configs/k8s.conf"
+    destination = "/home/centos/k8s.conf"
   }
 
-   provisioner "remote-exec" {
+  provisioner "remote-exec" {
     inline = ["sudo swapoff -a",
-      "sudo yum -y install docker",
-      "sudo systemctl enable docker",
-      "sudo systemctl start docker",
       "sudo cp kubernetes.repo /etc/yum.repos.d/kubernetes.repo",
       "sudo yum install -y kubelet kubeadm kubectl",
       "sudo systemctl enable kubelet",
@@ -180,7 +172,7 @@ resource "aws_instance" "worker1" {
 
   root_block_device {
     volume_type           = "gp2"
-    volume_size           = "35"
+    volume_size           = "60"
     delete_on_termination = true
   }
 
@@ -192,11 +184,18 @@ resource "aws_instance" "worker1" {
     private_key = "${file("~/.ssh/id_rsa")}"
   }
 
+  provisioner "file" {
+    source      = "configs/kubernetes.repo"
+    destination = "/home/centos/kubernetes.repo"
+  }
+
+  provisioner "file" {
+    source      = "configs/k8s.conf"
+    destination = "/home/centos/k8s.conf"
+  }
+
   provisioner "remote-exec" {
     inline = ["sudo swapoff -a",
-      "sudo yum -y install docker",
-      "sudo systemctl enable docker",
-      "sudo systemctl start docker",
       "sudo cp kubernetes.repo /etc/yum.repos.d/kubernetes.repo",
       "sudo yum install -y kubelet kubeadm kubectl",
       "sudo systemctl enable kubelet",
@@ -288,5 +287,73 @@ resource "aws_security_group" "allow_bootstrap_access" {
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+resource "null_resource" "run_kubeadm" {
+  provisioner "remote-exec" {
+    inline = ["sudo kubeadm token create --print-join-command > command.txt"]
+
+    connection {
+      host        = "${aws_instance.master.public_ip}"
+      type        = "ssh"
+      timeout     = "6m"
+      user        = "centos"
+      private_key = "${file("~/.ssh/id_rsa")}"
+    }
+  }
+
+  provisioner "local-exec" {
+    command = "scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null  centos@${aws_instance.master.public_ip}:~/command.txt ."
+  }
+
+  provisioner "file" {
+    source      = "command.txt"
+    destination = "command.txt"
+
+    connection {
+      host        = "${aws_instance.worker0.public_ip}"
+      type        = "ssh"
+      timeout     = "6m"
+      user        = "centos"
+      private_key = "${file("~/.ssh/id_rsa")}"
+    }
+  }
+
+  provisioner "remote-exec" {
+    inline = ["sudo $(cat command.txt)"]
+
+    connection {
+      host        = "${aws_instance.worker0.public_ip}"
+      type        = "ssh"
+      timeout     = "6m"
+      user        = "centos"
+      private_key = "${file("~/.ssh/id_rsa")}"
+    }
+  }
+
+  provisioner "file" {
+    source      = "command.txt"
+    destination = "command.txt"
+
+    connection {
+      host        = "${aws_instance.worker1.public_ip}"
+      type        = "ssh"
+      timeout     = "6m"
+      user        = "centos"
+      private_key = "${file("~/.ssh/id_rsa")}"
+    }
+  }
+
+  provisioner "remote-exec" {
+    inline = ["sudo $(cat command.txt)"]
+
+    connection {
+      host        = "${aws_instance.worker0.public_ip}"
+      type        = "ssh"
+      timeout     = "6m"
+      user        = "centos"
+      private_key = "${file("~/.ssh/id_rsa")}"
+    }
   }
 }

@@ -55,13 +55,13 @@ output "default_route_table_id" {
 }
 
 output "controller0_ip" {
-  value = "${aws_instance.controller0.public_ip}"
+  value = "${aws_instance.master.public_ip}"
 }
 
-output "controller1_ip" {
-  value = "${aws_instance.controller1.public_ip}"
+output "worker0_ip" {
+  value = "${aws_instance.worker0.public_ip}"
 }
 
-output "apiserver1_ip" {
-  value = "${aws_instance.api_server.public_ip}"
+output "worker1_ip" {
+  value = "${aws_instance.worker1.public_ip}"
 }
