@@ -24,10 +24,7 @@ be used as well
 
 The option to create cluster using automation is to write 
 scripts to bootstrap the server or try to use ansbile playbooks
-to do the same, I will be bootstrapping the cluster using 
-ansible playbook. Before creating a kubernetes cluster, i need to 
-create the nodes, the VMS which will act as master nodes and
-worker nodes. The nodes should be able to talk to each other
+to do the same, 
 
 * Use terraform to create the infrastructure VPC with nodes (
 I will be not doing this, as this is not in the scope of the test, although 
