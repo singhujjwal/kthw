@@ -58,6 +58,11 @@ are few choices to do that.
     2. Using simple `remote-exec` automation as part of VM creation via terraform, while creating instances have
     a `remote-exec section` to run the shell commands to setup the master and 
     worker nodes
+* I think there is a confusing instruction in point 12 which talks about writing a 
+wrapper script to automate all this, i believe it is asking
+to automate the Kubernetes cluster creationion as well.
+For that i am now creating terraform based 
+automation to deploy the kubernetes cluster.
     
 * PREREQUISITE 
 cfssl and kubectl should be installed
