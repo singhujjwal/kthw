@@ -555,6 +555,39 @@ resource "null_resource" "setup_worker1" {
     destination = "/home/ubuntu/kube-proxy.kubeconfig"
   }
 
+  provisioner "file" {
+    source      = "configs/config.toml"
+    destination = "/home/ubuntu/config.toml"
+  }
+
+   provisioner "local-exec" {
+    command = "HOSTNAME=${aws_instance.worker1.private_dns} && cd configs && envsubst $${HOSTNAME} < kubelet-config.yaml > kubelet-config1.yaml"
+  }
+
+   provisioner "file" {
+    source      = "configs/kubelet-config1.yaml"
+    destination = "/home/ubuntu/kubelet-config.yaml"
+  }
+
+   provisioner "local-exec" {
+    command = "HOSTNAME=${aws_instance.worker1.private_dns} && cd configs && envsubst $${HOSTNAME} < kubelet.service > kubelet.service1"
+  }
+
+   provisioner "file" {
+    source      = "configs/kubelet.service1"
+    destination = "/home/ubuntu/kubelet.service"
+  }
+
+   provisioner "file" {
+    source      = "configs/kube-proxy-config.yaml"
+    destination = "/home/ubuntu/kube-proxy-config.yaml"
+  }
+
+   provisioner "file" {
+    source      = "configs/kube-proxy.service"
+    destination = "/home/ubuntu/kube-proxy.service"
+  }
+
    provisioner "remote-exec" {
     inline = [
       "sudo apt-get -y install socat conntrack ipset",
@@ -572,7 +605,22 @@ resource "null_resource" "setup_worker1" {
       "sudo mv kubectl kube-proxy kubelet runc runsc /usr/local/bin/",
       "sudo tar -xvf crictl-v1.0.0-beta.0-linux-amd64.tar.gz -C /usr/local/bin/",
       "sudo tar -xvf cni-plugins-amd64-v0.6.0.tgz -C /opt/cni/bin/",
-      "sudo tar -xvf containerd-1.1.0.linux-amd64.tar.gz -C /"
+      "sudo tar -xvf containerd-1.1.0.linux-amd64.tar.gz -C /",
+      "sudo mkdir -p /etc/containerd/",
+      "sudo cp config.toml /etc/containerd/config.toml",
+      "sudo cp containerd.service /etc/systemd/system/containerd.service"
+      "sudo mv ${aws_instance.worker1.private_dns}-key.pem /var/lib/kubelet/${aws_instance.worker1.private_dns}.pem",
+      "sudo mv ${aws_instance.worker1.private_dns}.kubeconfig /var/lib/kubelet/kubeconfig",
+      "sudo mv ca.pem /var/lib/kubernetes/",
+      "sudo cp kubelet-config.yaml /var/lib/kubelet/kubelet-config.yaml",
+      "sudo cp kubelet.service /etc/systemd/system/kubelet.service",
+      "sudo mv kube-proxy.kubeconfig /var/lib/kube-proxy/kubeconfig",
+      "sudo cp kube-proxy-config.yaml /var/lib/kube-proxy/kube-proxy-config.yaml",
+      "sudo cp kube-proxy.service /etc/systemd/system/kube-proxy.service",
+      "sudo systemctl daemon-reload",
+      "sudo systemctl enable containerd kubelet kube-proxy",
+      "sudo systemctl start containerd kubelet kube-proxy",
+      "sudo systemctl status containerd kubelet kube-proxy"
 
     ]
   }
