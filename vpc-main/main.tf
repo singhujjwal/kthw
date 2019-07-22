@@ -321,7 +321,7 @@ resource "null_resource" "run_kubeadm" {
   }
 
   provisioner "remote-exec" {
-    inline = ["sudo $(cat command.txt)"]
+    inline = ["sudo $(cat command.txt) --ignore-preflight-errors=All"]
 
     connection {
       host        = "${aws_instance.worker0.public_ip}"
@@ -346,7 +346,7 @@ resource "null_resource" "run_kubeadm" {
   }
 
   provisioner "remote-exec" {
-    inline = ["sudo $(cat command.txt)"]
+    inline = ["sudo $(cat command.txt) --ignore-preflight-errors=All"]
 
     connection {
       host        = "${aws_instance.worker0.public_ip}"

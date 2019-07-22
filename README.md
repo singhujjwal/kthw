@@ -63,3 +63,25 @@ automation to deploy the kubernetes cluster.
     
 * PREREQUISITE 
 cfssl and kubectl should be installed
+
+1. Kubernetes cluster is created using terraform
+2. Sample Pipeline Jenkinsfile is present.
+3. `platform.sh` script takes care of 
+> creating development namespace
+
+>deploying guest-book application
+
+>Helm installation
+
+>Helm install other applications like monitoring package, although the application is deployed via `kubectl`
+
+>Creating a monitoring namespace
+
+>Setting up prometheous
+
+>Grafana is installed, filebeat config is included but not deployed.
+
+>Blue/Green and Canary deployment will be taken care using app-gateway.yaml, changing the weight and with help of
+istio
+
+>Almost everything is automated.
