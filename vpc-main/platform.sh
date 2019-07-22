@@ -40,10 +40,17 @@ kubectl create ns monitoring
 
 kubectl apply -f manifest/filebeat.yaml
 
-helm install --name prom --namespace monitoring \
-    --set kubelet.serviceMonitor.https=true \
-    --set grafana.sidecar.dashboards.enabled=true \
-    --set grafana.sidecar.dashboards.label=grafana_dashboard \
-    --set grafana.sidecar.datasources.enabled=true \
-    --set grafana.sidecar.datasources.label=grafana_datasource \
-    -f manifest/customConfig.yaml --version 5.0.11 stable/prometheus-operator
+helm install \
+    --namespace=monitoring \
+    --name=prometheus \
+    --version=7.0.0 \
+    stable/prometheus
+
+helm install \
+    --namespace=monitoring \
+    --name=grafana \
+    --version=1.12.0 \
+    --set=adminUser=admin \
+    --set=adminPassword=admin \
+    --set=service.type=NodePort \
+    stable/grafana
